@@ -1,0 +1,3 @@
+@echo off
+echo 🚀 Starting SMS Gateway (Super Fast Mode)...
+go run ./src/cmd/server

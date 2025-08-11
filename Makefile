@@ -1,57 +1,86 @@
-.PHONY: build run test clean help
+# SMS Gateway Makefile - Optimized for Windows
 
-# Build the application
+# Variables
+BINARY_NAME=sms-gateway
+BUILD_DIR=build
+MAIN_PATH=./src/cmd/server
+GOFLAGS=-ldflags="-s -w"
+
+# Quick commands for development
+.PHONY: dev run build clean test hot
+
+# Super fast development run (no flags)
+dev:
+	@echo "🚀 Starting development server (fast mode)..."
+	go run $(MAIN_PATH)
+
+# Fast build and run
+run: build-fast start
+
+# Hot reload with nodemon
+hot:
+	@echo "🔥 Starting hot reload server..."
+	npm run watch
+
+# Build commands
+build-fast:
+	@echo "⚡ Fast building $(BINARY_NAME)..."
+	@if not exist $(BUILD_DIR) mkdir $(BUILD_DIR)
+	go build -o $(BUILD_DIR)/$(BINARY_NAME).exe $(MAIN_PATH)
+
 build:
-	go build -o bin/sms-gateway cmd/server/main.go
+	@echo "🔨 Building optimized $(BINARY_NAME)..."
+	@if not exist $(BUILD_DIR) mkdir $(BUILD_DIR)
+	go build $(GOFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME).exe $(MAIN_PATH)
 
-# Run the application
-run:
-	go run cmd/server/main.go
+# Start the built executable
+start:
+	@echo "▶️ Starting $(BINARY_NAME)..."
+	$(BUILD_DIR)/$(BINARY_NAME).exe
 
-# Run in background
-run-bg:
-	go run cmd/server/main.go &
-
-# Stop background process
-stop:
-	pkill -f "go run cmd/server/main.go" || true
-
-# Test the API
+# Quick test
 test:
-	./test_api.sh
+	@echo "🧪 Running tests..."
+	go test -v ./src/...
 
-# Clean build artifacts
+test-fast:
+	@echo "⚡ Running tests (fast)..."
+	go test ./src/...
+
+# Clean
 clean:
-	rm -rf bin/
-	go clean
+	@echo "🧹 Cleaning..."
+	@if exist $(BUILD_DIR) rmdir /s /q $(BUILD_DIR)
 
 # Install dependencies
 deps:
-	go mod tidy
+	@echo "📦 Installing dependencies..."
 	go mod download
 
-# Check for security vulnerabilities
-security:
-	go list -json -deps ./... | nancy sleuth
-
-# Format code
+# Format and vet
 fmt:
-	go fmt ./...
+	@echo "✨ Formatting code..."
+	go fmt ./src/...
 
-# Lint code
-lint:
-	golangci-lint run
+vet:
+	@echo "🔍 Vetting code..."
+	go vet ./src/...
 
-# Show help
+# Help
 help:
-	@echo "Available commands:"
-	@echo "  build    - Build the application"
-	@echo "  run      - Run the application"
-	@echo "  run-bg   - Run the application in background"
-	@echo "  stop     - Stop background process"
-	@echo "  test     - Test the API endpoints"
-	@echo "  clean    - Clean build artifacts"
-	@echo "  deps     - Install dependencies"
-	@echo "  fmt      - Format code"
-	@echo "  lint     - Lint code"
-	@echo "  help     - Show this help"
+	@echo "🚀 SMS Gateway - Quick Commands:"
+	@echo ""
+	@echo "Development:"
+	@echo "  dev       - Super fast development run"
+	@echo "  hot       - Hot reload with auto-restart"
+	@echo "  run       - Build fast and run"
+	@echo ""
+	@echo "Build:"
+	@echo "  build     - Optimized production build"
+	@echo "  build-fast- Fast development build"
+	@echo ""
+	@echo "Other:"
+	@echo "  test      - Run tests with output"
+	@echo "  test-fast - Run tests quickly"
+	@echo "  clean     - Clean build files"
+	@echo "  fmt       - Format code"

@@ -1,4 +1,4 @@
-module myproject
+module sms-gateway
 
 go 1.22
 
