@@ -90,26 +90,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/modem/test": {
-            "get": {
-                "description": "Test the modem connection (not implemented yet)",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Modem"
-                ],
-                "summary": "Test modem",
-                "responses": {
-                    "501": {
-                        "description": "Not implemented",
-                        "schema": {
-                            "$ref": "#/definitions/model.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
+        
         "/api/v1/ports": {
             "get": {
                 "description": "Get a list of all available serial ports",

@@ -120,20 +120,7 @@ func (s *SMSService) ListPorts() ([]string, error) {
 	return s.modemClient.ListPorts()
 }
 
-// TestModem tests modem functionality
-func (s *SMSService) TestModem(ctx context.Context, portName string, baudRate int) (*model.ModemTestResult, error) {
-	log.Printf("Testing modem on port: %s, baud rate: %d", portName, baudRate)
-
-	if baudRate == 0 {
-		baudRate = s.config.Modem.DefaultBaudRate
-	}
-
-	// TODO: Implement modem test
-	return &model.ModemTestResult{
-		Port:      portName,
-		BaudRate:  baudRate,
-		Connected: true,
-		Tests:     map[string]bool{"basic": true},
-		Timestamp: time.Now().Format(time.RFC3339),
-	}, nil
+// ListPortsWithInfo lists available serial ports with device information
+func (s *SMSService) ListPortsWithInfo() ([]model.PortInfo, error) {
+	return s.modemClient.ListPortsWithInfo()
 }

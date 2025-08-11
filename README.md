@@ -76,7 +76,7 @@ http://localhost:8080/swagger/
 | GET | `/api/v1/ports` | Danh sách ports |
 | GET | `/api/v1/ports/status` | Trạng thái port |
 | GET | `/api/v1/modem/info` | Thông tin modem |
-| GET | `/api/v1/modem/test` | Test modem |
+
 
 ## 📱 Sử dụng API
 

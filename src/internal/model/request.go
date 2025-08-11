@@ -11,12 +11,6 @@ type SendSMSRequest struct {
 	Priority string `json:"priority,omitempty"` // "normal", "high", "urgent"
 }
 
-// TestModemRequest represents a modem testing request
-type TestModemRequest struct {
-	Port     string `json:"port,omitempty"`
-	BaudRate int    `json:"baud_rate,omitempty"`
-}
-
 // HealthResponse represents health check response
 type HealthResponse struct {
 	Status    string `json:"status"`

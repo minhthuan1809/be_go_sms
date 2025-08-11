@@ -157,19 +157,7 @@ paths:
       summary: Get modem information
       tags:
       - Modem
-  /api/v1/modem/test:
-    get:
-      description: Test the modem connection (not implemented yet)
-      produces:
-      - application/json
-      responses:
-        "501":
-          description: Not implemented
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-      summary: Test modem
-      tags:
-      - Modem
+
   /api/v1/ports:
     get:
       description: Get a list of all available serial ports

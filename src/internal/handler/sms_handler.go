@@ -151,14 +151,14 @@ func (h *SMSHandler) HandleModemInfo(w http.ResponseWriter, r *http.Request) {
 
 // HandleListPorts handles listing available ports
 // @Summary List available ports
-// @Description Get a list of all available serial ports
+// @Description Get a list of all available serial ports with device information
 // @Tags Modem
 // @Produce json
-// @Success 200 {object} model.SuccessResponse "List of available ports"
+// @Success 200 {object} model.SuccessResponse "List of available ports with device info"
 // @Failure 500 {object} model.ErrorResponse "Internal server error"
 // @Router /api/v1/ports [get]
 func (h *SMSHandler) HandleListPorts(w http.ResponseWriter, r *http.Request) {
-	ports, err := h.smsService.ListPorts()
+	ports, err := h.smsService.ListPortsWithInfo()
 	if err != nil {
 		h.writeError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -196,18 +196,6 @@ func (h *SMSHandler) HandleRoot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteJSON(w, http.StatusOK, response)
-}
-
-// HandleTestModem handles modem testing requests
-// @Summary Test modem
-// @Description Test the modem connection (not implemented yet)
-// @Tags Modem
-// @Produce json
-// @Success 501 {object} model.ErrorResponse "Not implemented"
-// @Router /api/v1/modem/test [get]
-func (h *SMSHandler) HandleTestModem(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement modem test handler
-	h.writeError(w, http.StatusNotImplemented, "Modem test endpoint not implemented yet")
 }
 
 // writeError writes error response

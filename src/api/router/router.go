@@ -23,7 +23,6 @@ func NewRouter(cfg *config.Config, smsService *service.SMSService) http.Handler 
 	mux.HandleFunc("/", smsHandler.HandleRoot)
 	mux.HandleFunc("/api/v1/health", smsHandler.HandleHealth)
 	mux.HandleFunc("/api/v1/sms/send", smsHandler.HandleSendSMS)
-	mux.HandleFunc("/api/v1/modem/test", smsHandler.HandleTestModem)
 	mux.HandleFunc("/api/v1/ports", smsHandler.HandleListPorts)
 	mux.HandleFunc("/api/v1/ports/status", smsHandler.HandlePortStatus)
 	mux.HandleFunc("/api/v1/modem/info", smsHandler.HandleModemInfo)

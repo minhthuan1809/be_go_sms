@@ -56,6 +56,19 @@ type PortStatus struct {
 	Error     string `json:"error,omitempty"`
 }
 
+// PortInfo represents detailed port information
+type PortInfo struct {
+	Port        string   `json:"port"`
+	DeviceName  string   `json:"device_name,omitempty"`
+	Description string   `json:"description,omitempty"`
+	Msisdn      string   `json:"msisdn,omitempty"`
+	Balance     string   `json:"balance,omitempty"`
+	Packages    []string `json:"packages,omitempty"`
+	Available   bool     `json:"available"`
+	InUse       bool     `json:"in_use"`
+	Error       string   `json:"error,omitempty"`
+}
+
 // SendSMSResponse represents the response from sending an SMS
 type SendSMSResponse struct {
 	Success   bool     `json:"success"`
@@ -67,15 +80,4 @@ type SendSMSResponse struct {
 	To        string   `json:"to,omitempty"`
 	Message   string   `json:"message,omitempty"`
 	Timestamp string   `json:"timestamp,omitempty"`
-}
-
-// ModemTestResult represents modem test results
-type ModemTestResult struct {
-	Port      string            `json:"port"`
-	BaudRate  int               `json:"baud_rate"`
-	Connected bool              `json:"connected"`
-	Tests     map[string]bool   `json:"tests"`
-	Responses map[string]string `json:"responses,omitempty"`
-	Error     string            `json:"error,omitempty"`
-	Timestamp string            `json:"timestamp"`
 }

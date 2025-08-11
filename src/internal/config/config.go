@@ -27,6 +27,8 @@ type ModemConfig struct {
 	DefaultPort     string
 	DefaultBaudRate int
 	Timeout         time.Duration
+	BalanceUSSD     string
+	PackagesUSSD    string
 }
 
 // SMSConfig holds SMS configuration
@@ -50,6 +52,8 @@ func Load() *Config {
 			DefaultPort:     getEnv("MODEM_DEFAULT_PORT", "/dev/ttyUSB0"),
 			DefaultBaudRate: getEnvAsInt("MODEM_DEFAULT_BAUDRATE", 115200),
 			Timeout:         time.Duration(getEnvAsInt("MODEM_TIMEOUT", 30)) * time.Second,
+			BalanceUSSD:     getEnv("MODEM_BALANCE_USSD", ""),
+			PackagesUSSD:    getEnv("MODEM_PACKAGES_USSD", ""),
 		},
 		SMS: SMSConfig{
 			MaxLength:      getEnvAsInt("SMS_MAX_LENGTH", 160),
