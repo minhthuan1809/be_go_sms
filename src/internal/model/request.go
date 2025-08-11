@@ -2,22 +2,19 @@ package model
 
 // SendSMSRequest represents an SMS sending request
 type SendSMSRequest struct {
-	To        string `json:"to" validate:"required"`
-	Message   string `json:"message" validate:"required"`
-	Port      string `json:"port,omitempty"`
-	BaudRate  int    `json:"baud_rate,omitempty"`
-	Timeout   int    `json:"timeout,omitempty"`
-	Mode      string `json:"mode,omitempty"` // "text" or "pdu", default "text"
-	Priority  string `json:"priority,omitempty"` // "normal", "high", "urgent"
+	To       string `json:"to" validate:"required"`
+	Message  string `json:"message" validate:"required"`
+	Port     string `json:"port,omitempty"`
+	BaudRate int    `json:"baud_rate,omitempty"`
+	Timeout  int    `json:"timeout,omitempty"`
+	Mode     string `json:"mode,omitempty"`     // "text" or "pdu", default "text"
+	Priority string `json:"priority,omitempty"` // "normal", "high", "urgent"
 }
 
-// SendSMSResponse represents the response of SMS sending
-type SendSMSResponse struct {
-	Success   bool     `json:"success"`
-	MessageID string   `json:"message_id,omitempty"`
-	Steps     []string `json:"steps,omitempty"`
-	Error     string   `json:"error,omitempty"`
-	Duration  string   `json:"duration"`
+// TestModemRequest represents a modem testing request
+type TestModemRequest struct {
+	Port     string `json:"port,omitempty"`
+	BaudRate int    `json:"baud_rate,omitempty"`
 }
 
 // HealthResponse represents health check response

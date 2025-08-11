@@ -153,6 +153,12 @@ func (h *SMSHandler) HandleRoot(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, response)
 }
 
+// HandleTestModem handles modem testing requests
+func (h *SMSHandler) HandleTestModem(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement modem test handler
+	h.writeError(w, http.StatusNotImplemented, "Modem test endpoint not implemented yet")
+}
+
 // writeError writes error response
 func (h *SMSHandler) writeError(w http.ResponseWriter, statusCode int, message string) {
 	response := model.ErrorResponse{

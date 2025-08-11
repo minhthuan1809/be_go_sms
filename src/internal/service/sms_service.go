@@ -35,8 +35,8 @@ func NewSMSService(cfg *config.Config) *SMSService {
 
 // SendSMS sends an SMS message
 func (s *SMSService) SendSMS(ctx context.Context, req *model.SendSMSRequest) (*model.SendSMSResponse, error) {
-	log.Printf("Starting SMS send process - Port: %s, BaudRate: %d, To: %s",
-		req.Port, req.BaudRate, req.To)
+	log.Printf("Starting SMS send process - Port: %s, BaudRate: %d, To: %s, Mode: %s",
+		req.Port, req.BaudRate, req.To, req.Mode)
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -54,17 +54,35 @@ func (s *SMSService) SendSMS(ctx context.Context, req *model.SendSMSRequest) (*m
 		req.Timeout = s.config.SMS.DefaultTimeout
 		log.Printf("Using default timeout: %d", req.Timeout)
 	}
+	if req.Mode == "" {
+		req.Mode = "text" // Default to text mode
+		log.Printf("Using default mode: %s", req.Mode)
+	}
 
 	startTime := time.Now()
 
-	// Send SMS using the SMS client
-	log.Printf("Calling SMS client SendViaText...")
-	steps, messageID, err := s.smsClient.SendViaText(ctx, req.Port, req.BaudRate, req.To, req.Message)
+	// Send SMS using the appropriate mode
+	var steps []string
+	var messageID string
+	var err error
+
+	if req.Mode == "pdu" {
+		log.Printf("Calling SMS client SendViaPDU...")
+		steps, messageID, err = s.smsClient.SendViaPDU(ctx, req.Port, req.BaudRate, req.To, req.Message)
+	} else {
+		log.Printf("Calling SMS client SendViaText...")
+		steps, messageID, err = s.smsClient.SendViaText(ctx, req.Port, req.BaudRate, req.To, req.Message)
+	}
+
 	duration := time.Since(startTime)
 
 	response := &model.SendSMSResponse{
-		Steps:    steps,
-		Duration: duration.String(),
+		Steps:     steps,
+		Duration:  duration.String(),
+		Mode:      req.Mode,
+		To:        req.To,
+		Message:   req.Message,
+		Timestamp: time.Now().Format(time.RFC3339),
 	}
 
 	if err != nil {
@@ -74,8 +92,8 @@ func (s *SMSService) SendSMS(ctx context.Context, req *model.SendSMSRequest) (*m
 		return response, err
 	}
 
-	log.Printf("SMS sent successfully - MessageID: %s, Steps: %d, Duration: %v",
-		messageID, len(steps), duration)
+	log.Printf("SMS sent successfully - MessageID: %s, Steps: %d, Duration: %v, Mode: %s",
+		messageID, len(steps), duration, req.Mode)
 	response.Success = true
 	response.MessageID = messageID
 	return response, nil
@@ -100,4 +118,22 @@ func (s *SMSService) GetModemInfo(ctx context.Context, port string, baudRate int
 // ListPorts lists available serial ports
 func (s *SMSService) ListPorts() ([]string, error) {
 	return s.modemClient.ListPorts()
+}
+
+// TestModem tests modem functionality
+func (s *SMSService) TestModem(ctx context.Context, portName string, baudRate int) (*model.ModemTestResult, error) {
+	log.Printf("Testing modem on port: %s, baud rate: %d", portName, baudRate)
+
+	if baudRate == 0 {
+		baudRate = s.config.Modem.DefaultBaudRate
+	}
+
+	// TODO: Implement modem test
+	return &model.ModemTestResult{
+		Port:      portName,
+		BaudRate:  baudRate,
+		Connected: true,
+		Tests:     map[string]bool{"basic": true},
+		Timestamp: time.Now().Format(time.RFC3339),
+	}, nil
 }
