@@ -4,16 +4,18 @@ package router
 import (
 	"net/http"
 
+	_ "sms-gateway/docs"
 	"sms-gateway/src/api/middleware"
 	"sms-gateway/src/internal/config"
 	"sms-gateway/src/internal/handler"
 	"sms-gateway/src/internal/service"
+
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 // NewRouter creates a new HTTP router with all routes configured
 func NewRouter(cfg *config.Config, smsService *service.SMSService) http.Handler {
 	mux := http.NewServeMux()
-
 	// Create handlers
 	smsHandler := handler.NewSMSHandler(cfg, smsService)
 
@@ -25,6 +27,14 @@ func NewRouter(cfg *config.Config, smsService *service.SMSService) http.Handler 
 	mux.HandleFunc("/api/v1/ports", smsHandler.HandleListPorts)
 	mux.HandleFunc("/api/v1/ports/status", smsHandler.HandlePortStatus)
 	mux.HandleFunc("/api/v1/modem/info", smsHandler.HandleModemInfo)
+
+	// Swagger documentation
+	mux.HandleFunc("/swagger/", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+		httpSwagger.DeepLinking(true),
+		httpSwagger.DocExpansion("none"),
+		httpSwagger.DomID("swagger-ui"),
+	))
 
 	// Legacy routes for backward compatibility
 	mux.HandleFunc("/health", smsHandler.HandleHealth)

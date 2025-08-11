@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	_ "sms-gateway/docs"
 	"sms-gateway/src/api/router"
 	"sms-gateway/src/internal/config"
 	"sms-gateway/src/internal/service"

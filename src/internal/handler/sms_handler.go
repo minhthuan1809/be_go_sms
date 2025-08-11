@@ -30,6 +30,16 @@ func NewSMSHandler(cfg *config.Config, smsService *service.SMSService) *SMSHandl
 }
 
 // HandleSendSMS handles SMS sending requests
+// @Summary Send SMS message
+// @Description Send an SMS message through the configured modem
+// @Tags SMS
+// @Accept json
+// @Produce json
+// @Param request body model.SendSMSRequest true "SMS request details"
+// @Success 200 {object} model.SendSMSResponse "SMS sent successfully"
+// @Failure 400 {object} model.ErrorResponse "Bad request"
+// @Failure 500 {object} model.SendSMSResponse "Internal server error"
+// @Router /api/v1/sms/send [post]
 func (h *SMSHandler) HandleSendSMS(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		h.writeError(w, http.StatusMethodNotAllowed, "Method not allowed. Use POST.")
@@ -69,6 +79,12 @@ func (h *SMSHandler) HandleSendSMS(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleHealth handles health check requests
+// @Summary Health check
+// @Description Check the health status of the SMS Gateway service
+// @Tags Health
+// @Produce json
+// @Success 200 {object} model.HealthResponse "Service health status"
+// @Router /api/v1/health [get]
 func (h *SMSHandler) HandleHealth(w http.ResponseWriter, r *http.Request) {
 	uptime := time.Since(h.startTime)
 
@@ -83,6 +99,14 @@ func (h *SMSHandler) HandleHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandlePortStatus handles port status check requests
+// @Summary Check port status
+// @Description Check the status of a specific serial port
+// @Tags Modem
+// @Produce json
+// @Param port query string false "Port name (defaults to configured default port)"
+// @Success 200 {object} model.PortStatus "Port status information"
+// @Failure 500 {object} model.ErrorResponse "Internal server error"
+// @Router /api/v1/ports/status [get]
 func (h *SMSHandler) HandlePortStatus(w http.ResponseWriter, r *http.Request) {
 	port := r.URL.Query().Get("port")
 	if port == "" {
@@ -99,6 +123,14 @@ func (h *SMSHandler) HandlePortStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleModemInfo handles modem information requests
+// @Summary Get modem information
+// @Description Get detailed information about the modem
+// @Tags Modem
+// @Produce json
+// @Param port query string false "Port name (defaults to configured default port)"
+// @Success 200 {object} model.ModemInfo "Modem information"
+// @Failure 500 {object} model.ErrorResponse "Internal server error"
+// @Router /api/v1/modem/info [get]
 func (h *SMSHandler) HandleModemInfo(w http.ResponseWriter, r *http.Request) {
 	port := r.URL.Query().Get("port")
 	if port == "" {
@@ -118,6 +150,13 @@ func (h *SMSHandler) HandleModemInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleListPorts handles listing available ports
+// @Summary List available ports
+// @Description Get a list of all available serial ports
+// @Tags Modem
+// @Produce json
+// @Success 200 {object} model.SuccessResponse "List of available ports"
+// @Failure 500 {object} model.ErrorResponse "Internal server error"
+// @Router /api/v1/ports [get]
 func (h *SMSHandler) HandleListPorts(w http.ResponseWriter, r *http.Request) {
 	ports, err := h.smsService.ListPorts()
 	if err != nil {
@@ -136,6 +175,12 @@ func (h *SMSHandler) HandleListPorts(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleRoot handles the root endpoint
+// @Summary API information
+// @Description Get information about the SMS Gateway API
+// @Tags General
+// @Produce json
+// @Success 200 {object} map[string]interface{} "API information"
+// @Router / [get]
 func (h *SMSHandler) HandleRoot(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
 		"service": "SMS Gateway API",
@@ -154,6 +199,12 @@ func (h *SMSHandler) HandleRoot(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleTestModem handles modem testing requests
+// @Summary Test modem
+// @Description Test the modem connection (not implemented yet)
+// @Tags Modem
+// @Produce json
+// @Success 501 {object} model.ErrorResponse "Not implemented"
+// @Router /api/v1/modem/test [get]
 func (h *SMSHandler) HandleTestModem(w http.ResponseWriter, r *http.Request) {
 	// TODO: Implement modem test handler
 	h.writeError(w, http.StatusNotImplemented, "Modem test endpoint not implemented yet")

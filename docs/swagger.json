@@ -1,0 +1,371 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/": {
+            "get": {
+                "description": "Get information about the SMS Gateway API",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "General"
+                ],
+                "summary": "API information",
+                "responses": {
+                    "200": {
+                        "description": "API information",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/health": {
+            "get": {
+                "description": "Check the health status of the SMS Gateway service",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Health check",
+                "responses": {
+                    "200": {
+                        "description": "Service health status",
+                        "schema": {
+                            "$ref": "#/definitions/model.HealthResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/modem/info": {
+            "get": {
+                "description": "Get detailed information about the modem",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Modem"
+                ],
+                "summary": "Get modem information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Port name (defaults to configured default port)",
+                        "name": "port",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Modem information",
+                        "schema": {
+                            "$ref": "#/definitions/model.ModemInfo"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/modem/test": {
+            "get": {
+                "description": "Test the modem connection (not implemented yet)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Modem"
+                ],
+                "summary": "Test modem",
+                "responses": {
+                    "501": {
+                        "description": "Not implemented",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/ports": {
+            "get": {
+                "description": "Get a list of all available serial ports",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Modem"
+                ],
+                "summary": "List available ports",
+                "responses": {
+                    "200": {
+                        "description": "List of available ports",
+                        "schema": {
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/ports/status": {
+            "get": {
+                "description": "Check the status of a specific serial port",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Modem"
+                ],
+                "summary": "Check port status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Port name (defaults to configured default port)",
+                        "name": "port",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Port status information",
+                        "schema": {
+                            "$ref": "#/definitions/model.PortStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sms/send": {
+            "post": {
+                "description": "Send an SMS message through the configured modem",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SMS"
+                ],
+                "summary": "Send SMS message",
+                "parameters": [
+                    {
+                        "description": "SMS request details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.SendSMSRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SMS sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/model.SendSMSResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.SendSMSResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "model.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.HealthResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "uptime": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.ModemInfo": {
+            "type": "object",
+            "properties": {
+                "baud_rate": {
+                    "type": "integer"
+                },
+                "connected": {
+                    "type": "boolean"
+                },
+                "imei": {
+                    "type": "string"
+                },
+                "manufacturer": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "string"
+                },
+                "signal": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.PortStatus": {
+            "type": "object",
+            "properties": {
+                "available": {
+                    "type": "boolean"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "in_use": {
+                    "type": "boolean"
+                },
+                "port": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SendSMSRequest": {
+            "type": "object",
+            "required": [
+                "message",
+                "to"
+            ],
+            "properties": {
+                "baud_rate": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "mode": {
+                    "description": "\"text\" or \"pdu\", default \"text\"",
+                    "type": "string"
+                },
+                "port": {
+                    "type": "string"
+                },
+                "priority": {
+                    "description": "\"normal\", \"high\", \"urgent\"",
+                    "type": "string"
+                },
+                "timeout": {
+                    "type": "integer"
+                },
+                "to": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SendSMSResponse": {
+            "type": "object",
+            "properties": {
+                "duration": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "message_id": {
+                    "type": "string"
+                },
+                "mode": {
+                    "description": "\"text\" or \"pdu\"",
+                    "type": "string"
+                },
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "to": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SuccessResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
