@@ -1,12 +1,14 @@
 package model
 
-// SendSMSRequest represents the request to send an SMS
+// SendSMSRequest represents an SMS sending request
 type SendSMSRequest struct {
-	To       string `json:"to" validate:"required"`
-	Message  string `json:"message" validate:"required,max=160"`
-	Port     string `json:"port,omitempty"`
-	BaudRate int    `json:"baud_rate,omitempty"`
-	Timeout  int    `json:"timeout,omitempty"`
+	To        string `json:"to" validate:"required"`
+	Message   string `json:"message" validate:"required"`
+	Port      string `json:"port,omitempty"`
+	BaudRate  int    `json:"baud_rate,omitempty"`
+	Timeout   int    `json:"timeout,omitempty"`
+	Mode      string `json:"mode,omitempty"` // "text" or "pdu", default "text"
+	Priority  string `json:"priority,omitempty"` // "normal", "high", "urgent"
 }
 
 // SendSMSResponse represents the response of SMS sending

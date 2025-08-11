@@ -55,3 +55,16 @@ type PortStatus struct {
 	InUse     bool   `json:"in_use"`
 	Error     string `json:"error,omitempty"`
 }
+
+// SendSMSResponse represents the response from sending an SMS
+type SendSMSResponse struct {
+	Success   bool      `json:"success"`
+	MessageID string    `json:"message_id,omitempty"`
+	Error     string    `json:"error,omitempty"`
+	Steps     []string  `json:"steps,omitempty"`
+	Duration  string    `json:"duration,omitempty"`
+	Mode      string    `json:"mode,omitempty"` // "text" or "pdu"
+	To        string    `json:"to,omitempty"`
+	Message   string    `json:"message,omitempty"`
+	Timestamp string    `json:"timestamp,omitempty"`
+}

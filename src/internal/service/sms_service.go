@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log"
 	"sync"
 	"time"
 
@@ -34,24 +35,31 @@ func NewSMSService(cfg *config.Config) *SMSService {
 
 // SendSMS sends an SMS message
 func (s *SMSService) SendSMS(ctx context.Context, req *model.SendSMSRequest) (*model.SendSMSResponse, error) {
+	log.Printf("Starting SMS send process - Port: %s, BaudRate: %d, To: %s",
+		req.Port, req.BaudRate, req.To)
+
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	// Set defaults if not provided
 	if req.Port == "" {
 		req.Port = s.config.Modem.DefaultPort
+		log.Printf("Using default port: %s", req.Port)
 	}
 	if req.BaudRate == 0 {
 		req.BaudRate = s.config.Modem.DefaultBaudRate
+		log.Printf("Using default baud rate: %d", req.BaudRate)
 	}
 	if req.Timeout == 0 {
 		req.Timeout = s.config.SMS.DefaultTimeout
+		log.Printf("Using default timeout: %d", req.Timeout)
 	}
 
 	startTime := time.Now()
 
 	// Send SMS using the SMS client
-	steps, messageID, err := s.smsClient.SendViaPDU(ctx, req.Port, req.BaudRate, req.To, req.Message)
+	log.Printf("Calling SMS client SendViaText...")
+	steps, messageID, err := s.smsClient.SendViaText(ctx, req.Port, req.BaudRate, req.To, req.Message)
 	duration := time.Since(startTime)
 
 	response := &model.SendSMSResponse{
@@ -60,11 +68,14 @@ func (s *SMSService) SendSMS(ctx context.Context, req *model.SendSMSRequest) (*m
 	}
 
 	if err != nil {
+		log.Printf("SMS client error: %v", err)
 		response.Success = false
 		response.Error = err.Error()
 		return response, err
 	}
 
+	log.Printf("SMS sent successfully - MessageID: %s, Steps: %d, Duration: %v",
+		messageID, len(steps), duration)
 	response.Success = true
 	response.MessageID = messageID
 	return response, nil

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -37,12 +38,18 @@ func (h *SMSHandler) HandleSendSMS(w http.ResponseWriter, r *http.Request) {
 
 	var req model.SendSMSRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("Error decoding JSON request: %v", err)
 		h.writeError(w, http.StatusBadRequest, "Invalid JSON body: "+err.Error())
 		return
 	}
 
+	// Log incoming request
+	log.Printf("SMS request received - To: %s, Port: %s, Message length: %d",
+		req.To, req.Port, len(req.Message))
+
 	// Validate request
 	if err := validation.ValidateSendSMSRequest(&req); err != nil {
+		log.Printf("Validation error: %v", err)
 		h.writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -50,10 +57,14 @@ func (h *SMSHandler) HandleSendSMS(w http.ResponseWriter, r *http.Request) {
 	// Send SMS
 	response, err := h.smsService.SendSMS(r.Context(), &req)
 	if err != nil {
+		log.Printf("SMS service error: %v", err)
+		// Return the response with error details
 		utils.WriteJSON(w, http.StatusInternalServerError, response)
 		return
 	}
 
+	log.Printf("SMS sent successfully - MessageID: %s, Duration: %s",
+		response.MessageID, response.Duration)
 	utils.WriteJSON(w, http.StatusOK, response)
 }
 
