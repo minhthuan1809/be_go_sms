@@ -100,11 +100,11 @@ func (h *SMSHandler) HandleHealth(w http.ResponseWriter, r *http.Request) {
 
 // HandlePortStatus handles port status check requests
 // @Summary Check port status
-// @Description Check the status of a specific serial port
+// @Description Check the status of a specific serial port and return SIM balance (if configured)
 // @Tags Modem
 // @Produce json
 // @Param port query string false "Port name (defaults to configured default port)"
-// @Success 200 {object} model.PortStatus "Port status information"
+// @Success 200 {object} model.PortStatus "Port status information including balance if available"
 // @Failure 500 {object} model.ErrorResponse "Internal server error"
 // @Router /api/v1/ports/status [get]
 func (h *SMSHandler) HandlePortStatus(w http.ResponseWriter, r *http.Request) {

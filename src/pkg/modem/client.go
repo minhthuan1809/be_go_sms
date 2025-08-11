@@ -47,6 +47,28 @@ func (c *Client) CheckPortStatus(portName string) (*model.PortStatus, error) {
 	defer port.Close()
 
 	status.Available = true
+
+	// Try to fetch SIM balance via USSD if configured
+	if ussd := strings.TrimSpace(c.config.Modem.BalanceUSSD); ussd != "" {
+		// Keep it short to avoid blocking for too long
+		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+		defer cancel()
+		// Enable USSD and query; ignore errors but capture response
+		_ = func() error {
+			if _, err := c.sendATCommand(ctx, port, "AT+CUSD=1"); err != nil {
+				return err
+			}
+			cmd := "AT+CUSD=1,\"" + ussd + "\",15"
+			if _, err := c.sendATCommand(ctx, port, cmd); err != nil {
+				return err
+			}
+			resp, err := c.readResponse(ctx, port, 8*time.Second)
+			if err == nil && strings.TrimSpace(resp) != "" {
+				status.Balance = strings.TrimSpace(resp)
+			}
+			return nil
+		}()
+	}
 	return status, nil
 }
 
@@ -311,38 +333,4 @@ func (c *Client) runUSSD(port serial.Port, code string) (string, error) {
 		return "", err
 	}
 	return strings.TrimSpace(resp), nil
-}
-
-// helper to read USSD response
-type readerPort interface {
-	Read([]byte) (int, error)
-	SetReadTimeout(time.Duration)
-}
-
-func (c *Client) readResponse(p readerPort, ctx context.Context) (string, error) {
-	deadline := time.Now().Add(10 * time.Second)
-	var response strings.Builder
-	buf := make([]byte, 1024)
-	for {
-		select {
-		case <-ctx.Done():
-			return response.String(), ctx.Err()
-		default:
-		}
-		if time.Now().After(deadline) {
-			return response.String(), fmt.Errorf("timeout")
-		}
-		p.SetReadTimeout(200 * time.Millisecond)
-		n, err := p.Read(buf)
-		if err != nil {
-			continue
-		}
-		if n > 0 {
-			response.Write(buf[:n])
-			text := response.String()
-			if strings.Contains(text, "+CUSD:") || strings.Contains(text, "OK") || strings.Contains(text, "ERROR") {
-				return text, nil
-			}
-		}
-	}
 }

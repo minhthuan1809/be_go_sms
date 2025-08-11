@@ -53,6 +53,7 @@ type PortStatus struct {
 	Port      string `json:"port"`
 	Available bool   `json:"available"`
 	InUse     bool   `json:"in_use"`
+	Balance   string `json:"balance,omitempty"`
 	Error     string `json:"error,omitempty"`
 }
 
