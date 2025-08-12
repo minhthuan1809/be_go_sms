@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"sms-gateway/src/internal/config"
@@ -191,11 +192,48 @@ func (h *SMSHandler) HandleRoot(w http.ResponseWriter, r *http.Request) {
 			"GET /api/v1/ports":        "List available ports",
 			"GET /api/v1/ports/status": "Check port status",
 			"GET /api/v1/modem/info":   "Get modem information",
+			"GET /api/v1/device/info":  "Get detailed device information",
 		},
 		"timestamp": time.Now().Format(time.RFC3339),
 	}
 
 	utils.WriteJSON(w, http.StatusOK, response)
+}
+
+// HandleDeviceInfo handles detailed device information requests
+// @Summary Get detailed device information
+// @Description Get comprehensive device information including phone number, balance, network type, and SIM details
+// @Tags Device
+// @Produce json
+// @Param port query string false "Port name (defaults to configured default port)"
+// @Param baud_rate query int false "Baud rate (defaults to configured default baud rate)"
+// @Success 200 {object} model.DeviceInfo "Detailed device information"
+// @Failure 500 {object} model.ErrorResponse "Internal server error"
+// @Router /api/v1/device/info [get]
+func (h *SMSHandler) HandleDeviceInfo(w http.ResponseWriter, r *http.Request) {
+	port := r.URL.Query().Get("port")
+	if port == "" {
+		port = h.config.Modem.DefaultPort
+	}
+
+	baudRate := h.config.Modem.DefaultBaudRate
+	if baudRateStr := r.URL.Query().Get("baud_rate"); baudRateStr != "" {
+		if br, err := strconv.Atoi(baudRateStr); err == nil && br > 0 {
+			baudRate = br
+		}
+	}
+
+	log.Printf("Getting device info for port: %s, baud rate: %d", port, baudRate)
+
+	info, err := h.smsService.GetDeviceInfo(r.Context(), port, baudRate)
+	if err != nil {
+		log.Printf("Error getting device info: %v", err)
+		h.writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	log.Printf("Device info retrieved successfully for port: %s", port)
+	utils.WriteJSON(w, http.StatusOK, info)
 }
 
 // writeError writes error response

@@ -36,6 +36,46 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/device/info": {
+            "get": {
+                "description": "Get comprehensive device information including phone number, balance, network type, and SIM details",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Device"
+                ],
+                "summary": "Get detailed device information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Port name (defaults to configured default port)",
+                        "name": "port",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Baud rate (defaults to configured default baud rate)",
+                        "name": "baud_rate",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detailed device information",
+                        "schema": {
+                            "$ref": "#/definitions/model.DeviceInfo"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/health": {
             "get": {
                 "description": "Check the health status of the SMS Gateway service",
@@ -90,10 +130,9 @@ const docTemplate = `{
                 }
             }
         },
-        
         "/api/v1/ports": {
             "get": {
-                "description": "Get a list of all available serial ports",
+                "description": "Get a list of all available serial ports with device information",
                 "produces": [
                     "application/json"
                 ],
@@ -103,7 +142,7 @@ const docTemplate = `{
                 "summary": "List available ports",
                 "responses": {
                     "200": {
-                        "description": "List of available ports",
+                        "description": "List of available ports with device info",
                         "schema": {
                             "$ref": "#/definitions/model.SuccessResponse"
                         }
@@ -119,7 +158,7 @@ const docTemplate = `{
         },
         "/api/v1/ports/status": {
             "get": {
-                "description": "Check the status of a specific serial port",
+                "description": "Check the status of a specific serial port and return SIM balance (if configured)",
                 "produces": [
                     "application/json"
                 ],
@@ -137,7 +176,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Port status information",
+                        "description": "Port status information including balance if available",
                         "schema": {
                             "$ref": "#/definitions/model.PortStatus"
                         }
@@ -199,6 +238,56 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "model.DeviceInfo": {
+            "type": "object",
+            "properties": {
+                "balance": {
+                    "type": "string"
+                },
+                "baud_rate": {
+                    "type": "integer"
+                },
+                "connected": {
+                    "type": "boolean"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "imei": {
+                    "type": "string"
+                },
+                "imsi": {
+                    "type": "string"
+                },
+                "manufacturer": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "network_type": {
+                    "type": "string"
+                },
+                "operator": {
+                    "type": "string"
+                },
+                "phone_number": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "string"
+                },
+                "signal_level": {
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
         "model.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -264,6 +353,9 @@ const docTemplate = `{
             "properties": {
                 "available": {
                     "type": "boolean"
+                },
+                "balance": {
+                    "type": "string"
                 },
                 "error": {
                     "type": "string"

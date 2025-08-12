@@ -124,3 +124,11 @@ func (s *SMSService) ListPorts() ([]string, error) {
 func (s *SMSService) ListPortsWithInfo() ([]model.PortInfo, error) {
 	return s.modemClient.ListPortsWithInfo()
 }
+
+// GetDeviceInfo gets comprehensive device information including SIM details
+func (s *SMSService) GetDeviceInfo(ctx context.Context, port string, baudRate int) (*model.DeviceInfo, error) {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	return s.modemClient.GetDeviceInfo(ctx, port, baudRate)
+}

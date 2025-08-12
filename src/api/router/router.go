@@ -26,6 +26,7 @@ func NewRouter(cfg *config.Config, smsService *service.SMSService) http.Handler 
 	mux.HandleFunc("/api/v1/ports", smsHandler.HandleListPorts)
 	mux.HandleFunc("/api/v1/ports/status", smsHandler.HandlePortStatus)
 	mux.HandleFunc("/api/v1/modem/info", smsHandler.HandleModemInfo)
+	mux.HandleFunc("/api/v1/device/info", smsHandler.HandleDeviceInfo)
 
 	// Swagger documentation
 	mux.HandleFunc("/swagger/", httpSwagger.Handler(

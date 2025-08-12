@@ -82,3 +82,22 @@ type SendSMSResponse struct {
 	Message   string   `json:"message,omitempty"`
 	Timestamp string   `json:"timestamp,omitempty"`
 }
+
+// DeviceInfo represents detailed device information including SIM details
+type DeviceInfo struct {
+	Port         string `json:"port"`
+	BaudRate     int    `json:"baud_rate"`
+	PhoneNumber  string `json:"phone_number,omitempty"`
+	Balance      string `json:"balance,omitempty"`
+	NetworkType  string `json:"network_type,omitempty"`
+	Operator     string `json:"operator,omitempty"`
+	SignalLevel  int    `json:"signal_level,omitempty"`
+	IMEI         string `json:"imei,omitempty"`
+	IMSI         string `json:"imsi,omitempty"`
+	Manufacturer string `json:"manufacturer,omitempty"`
+	Model        string `json:"model,omitempty"`
+	Version      string `json:"version,omitempty"`
+	Connected    bool   `json:"connected"`
+	Error        string `json:"error,omitempty"`
+	Timestamp    string `json:"timestamp"`
+}
