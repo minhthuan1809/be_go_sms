@@ -43,7 +43,7 @@ type SMSConfig struct {
 func Load() *Config {
 	return &Config{
 		Server: ServerConfig{
-			Address:      getEnv("SERVER_ADDRESS", ":8080"),
+			Address:      getEnv("SERVER_ADDRESS", ":3333"),
 			ReadTimeout:  getEnvAsInt("SERVER_READ_TIMEOUT", 10),
 			WriteTimeout: getEnvAsInt("SERVER_WRITE_TIMEOUT", 10),
 			IdleTimeout:  getEnvAsInt("SERVER_IDLE_TIMEOUT", 120),

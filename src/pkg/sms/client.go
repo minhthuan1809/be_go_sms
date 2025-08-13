@@ -97,7 +97,9 @@ func (c *Client) SendViaPDU(ctx context.Context, portName string, baudRate int, 
 
 	steps = append(steps, "Sending PDU data")
 	log.Printf("SMS Client: Sending PDU data...")
-	if err := c.sendATCommand(ctx, port, pdu+"\x1A", "OK"); err != nil {
+
+	// For PDU mode, also use the special SMS sender
+	if err := c.sendSMSPDU(ctx, port, pdu); err != nil {
 		log.Printf("SMS Client: Failed to send SMS: %v", err)
 		return steps, "", fmt.Errorf("failed to send SMS: %w", err)
 	}
@@ -173,7 +175,10 @@ func (c *Client) SendViaText(ctx context.Context, portName string, baudRate int,
 
 	steps = append(steps, "Sending message text")
 	log.Printf("SMS Client: Sending message text...")
-	if err := c.sendATCommand(ctx, port, message+"\x1A", "OK"); err != nil {
+
+	// For SMS sending, we might get different responses like "+CMGS: <id>" followed by "OK"
+	// or just "OK", so let's create a special handler for SMS sending
+	if err := c.sendSMSMessage(ctx, port, message); err != nil {
 		log.Printf("SMS Client: Failed to send SMS: %v", err)
 		return steps, "", fmt.Errorf("failed to send SMS: %w", err)
 	}
@@ -225,12 +230,23 @@ func (c *Client) sendATCommand(ctx context.Context, port serial.Port, command, e
 		return err
 	}
 
-	// Wait for response - reduce timeout to 5 seconds
+	// Use different timeouts based on command type
 	timeout := time.Duration(5) * time.Second
+
+	// For SMS sending commands, use longer timeout
+	if strings.Contains(command, "\x1A") {
+		timeout = time.Duration(30) * time.Second // 30 seconds for SMS sending
+		log.Printf("SMS Client: Using extended timeout for SMS sending: %v", timeout)
+	} else if strings.Contains(command, "AT+CMGS") {
+		timeout = time.Duration(10) * time.Second // 10 seconds for SMS command setup
+		log.Printf("SMS Client: Using extended timeout for SMS command: %v", timeout)
+	}
+
 	log.Printf("SMS Client: Waiting for response with timeout: %v", timeout)
 	response, err := c.readUntil(ctx, port, timeout, expected)
 	if err != nil {
 		log.Printf("SMS Client: Failed to read response: %v", err)
+		log.Printf("SMS Client: Partial response received: %s", response)
 		return err
 	}
 
@@ -280,6 +296,82 @@ func (c *Client) readUntil(ctx context.Context, port serial.Port, timeout time.D
 			return text, nil
 		}
 	}
+}
+
+// sendSMSMessage sends the SMS message and handles various response patterns
+func (c *Client) sendSMSMessage(ctx context.Context, port serial.Port, message string) error {
+	log.Printf("SMS Client: Sending SMS message with Ctrl+Z...")
+
+	// Send message with Ctrl+Z terminator
+	_, err := port.Write([]byte(message + "\x1A"))
+	if err != nil {
+		log.Printf("SMS Client: Failed to write message: %v", err)
+		return err
+	}
+
+	// Wait for SMS response with extended timeout (30 seconds)
+	timeout := time.Duration(30) * time.Second
+	log.Printf("SMS Client: Waiting for SMS response with timeout: %v", timeout)
+
+	response, err := c.readUntil(ctx, port, timeout, "OK")
+	if err != nil {
+		log.Printf("SMS Client: Failed to get OK response: %v", err)
+
+		// Check if we got a partial response with message ID
+		if strings.Contains(response, "+CMGS:") {
+			log.Printf("SMS Client: Got CMGS response but no OK: %s", response)
+			// Sometimes the OK comes separately, try to read it
+			additionalResponse, additionalErr := c.readUntil(ctx, port, time.Duration(5)*time.Second, "OK")
+			if additionalErr == nil {
+				log.Printf("SMS Client: Got delayed OK response: %s", additionalResponse)
+				return nil
+			}
+			log.Printf("SMS Client: No additional OK received: %v", additionalErr)
+		}
+
+		return err
+	}
+
+	log.Printf("SMS Client: SMS sent successfully, response: %s", response)
+	return nil
+}
+
+// sendSMSPDU sends the PDU data and handles various response patterns
+func (c *Client) sendSMSPDU(ctx context.Context, port serial.Port, pdu string) error {
+	log.Printf("SMS Client: Sending PDU data with Ctrl+Z...")
+
+	// Send PDU with Ctrl+Z terminator
+	_, err := port.Write([]byte(pdu + "\x1A"))
+	if err != nil {
+		log.Printf("SMS Client: Failed to write PDU: %v", err)
+		return err
+	}
+
+	// Wait for SMS response with extended timeout (30 seconds)
+	timeout := time.Duration(30) * time.Second
+	log.Printf("SMS Client: Waiting for PDU SMS response with timeout: %v", timeout)
+
+	response, err := c.readUntil(ctx, port, timeout, "OK")
+	if err != nil {
+		log.Printf("SMS Client: Failed to get OK response: %v", err)
+
+		// Check if we got a partial response with message ID
+		if strings.Contains(response, "+CMGS:") {
+			log.Printf("SMS Client: Got CMGS response but no OK: %s", response)
+			// Sometimes the OK comes separately, try to read it
+			additionalResponse, additionalErr := c.readUntil(ctx, port, time.Duration(5)*time.Second, "OK")
+			if additionalErr == nil {
+				log.Printf("SMS Client: Got delayed OK response: %s", additionalResponse)
+				return nil
+			}
+			log.Printf("SMS Client: No additional OK received: %v", additionalErr)
+		}
+
+		return err
+	}
+
+	log.Printf("SMS Client: PDU SMS sent successfully, response: %s", response)
+	return nil
 }
 
 // generatePDU generates PDU for SMS

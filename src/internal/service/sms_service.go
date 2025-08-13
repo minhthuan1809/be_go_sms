@@ -2,7 +2,10 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -131,4 +134,135 @@ func (s *SMSService) GetDeviceInfo(ctx context.Context, port string, baudRate in
 	defer s.mutex.RUnlock()
 
 	return s.modemClient.GetDeviceInfo(ctx, port, baudRate)
+}
+
+// GetAllDevicesInfo gets device information for all available USB ports with optimizations
+func (s *SMSService) GetAllDevicesInfo(ctx context.Context) ([]model.DeviceInfo, error) {
+	startTime := time.Now()
+	log.Printf("Starting GetAllDevicesInfo operation")
+
+	// Get list of available USB ports
+	allPorts, err := s.modemClient.ListPorts()
+	if err != nil {
+		log.Printf("Failed to get ports list: %v", err)
+		return nil, fmt.Errorf("failed to get ports: %w", err)
+	}
+
+	// Filter for USB ports only
+	var usbPorts []string
+	for _, port := range allPorts {
+		if strings.Contains(port, "ttyUSB") {
+			usbPorts = append(usbPorts, port)
+		}
+	}
+
+	log.Printf("Found %d USB ports: %v", len(usbPorts), usbPorts)
+
+	if len(usbPorts) == 0 {
+		return []model.DeviceInfo{}, nil
+	}
+
+	// Create overall timeout context - increase timeout for multiple devices
+	overallTimeout := time.Duration(len(usbPorts)*15) * time.Second // 15 seconds per device
+	if overallTimeout > 60*time.Second {
+		overallTimeout = 60 * time.Second // Max 60 seconds total
+	}
+	
+	overallCtx, cancel := context.WithTimeout(ctx, overallTimeout)
+	defer cancel()
+
+	// Use semaphore to limit concurrent operations - REDUCE to 2 for USB bandwidth
+	maxConcurrent := 2 // Reduced from 4 to avoid USB bandwidth issues
+	if len(usbPorts) == 1 {
+		maxConcurrent = 1
+	}
+	log.Printf("Using max concurrent operations: %d", maxConcurrent)
+
+	semaphore := make(chan struct{}, maxConcurrent)
+	results := make(chan struct {
+		info model.DeviceInfo
+		port string
+		err  error
+	}, len(usbPorts))
+
+	// Start workers with staggered delays to reduce USB contention
+	for i, port := range usbPorts {
+		go func(portName string, index int) {
+			// Stagger the start times to reduce USB bus contention
+			delay := time.Duration(index*500) * time.Millisecond // 500ms delay between starts
+			time.Sleep(delay)
+			
+			log.Printf("[%s] Worker %d starting after %v delay", portName, index+1, delay)
+			
+			// Acquire semaphore
+			select {
+			case semaphore <- struct{}{}:
+				defer func() { <-semaphore }()
+			case <-overallCtx.Done():
+				log.Printf("[%s] Worker %d cancelled before acquiring semaphore", portName, index+1)
+				results <- struct {
+					info model.DeviceInfo
+					port string
+					err  error
+				}{model.DeviceInfo{Port: portName, Error: "cancelled"}, portName, fmt.Errorf("cancelled")}
+				return
+			}
+
+			log.Printf("[%s] Worker %d acquired semaphore, getting device info", portName, index+1)
+			workerStart := time.Now()
+
+			// Create individual timeout for this device - longer for single device operations
+			deviceTimeout := 12 * time.Second
+			deviceCtx, deviceCancel := context.WithTimeout(overallCtx, deviceTimeout)
+			defer deviceCancel()
+
+			info, err := s.modemClient.GetDeviceInfo(deviceCtx, portName, s.config.Modem.DefaultBaudRate)
+			workerDuration := time.Since(workerStart)
+			
+			if err != nil {
+				log.Printf("[%s] Worker %d failed after %v: %v", portName, index+1, workerDuration, err)
+				if info == nil {
+					info = &model.DeviceInfo{Port: portName, Error: err.Error()}
+				}
+			} else {
+				log.Printf("[%s] Worker %d completed successfully in %v (Phone: %s, Operator: %s)", 
+					portName, index+1, workerDuration, info.PhoneNumber, info.Operator)
+			}
+
+			results <- struct {
+				info model.DeviceInfo
+				port string
+				err  error
+			}{*info, portName, err}
+			
+			log.Printf("[%s] Worker %d finished, releasing semaphore", portName, index+1)
+		}(port, i)
+	}
+
+	// Collect results with detailed logging
+	log.Printf("Starting to collect results from %d workers", len(usbPorts))
+	var devicesInfo []model.DeviceInfo
+	for i := 0; i < len(usbPorts); i++ {
+		log.Printf("Waiting for result %d/%d", i+1, len(usbPorts))
+		select {
+		case res := <-results:
+			log.Printf("Received result from %s: Success=%t, Phone=%s", 
+				res.port, res.err == nil, res.info.PhoneNumber)
+			devicesInfo = append(devicesInfo, res.info)
+		case <-overallCtx.Done():
+			log.Printf("Overall timeout reached while collecting results, returning %d devices", len(devicesInfo))
+			goto done
+		}
+	}
+
+done:
+	totalDuration := time.Since(startTime)
+	log.Printf("GetAllDevicesInfo completed in %v, returning %d devices", totalDuration, len(devicesInfo))
+	
+	// Sort results by port name for consistent ordering
+	sort.Slice(devicesInfo, func(i, j int) bool {
+		return devicesInfo[i].Port < devicesInfo[j].Port
+	})
+	
+	return devicesInfo, nil
 }
